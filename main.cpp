@@ -12,6 +12,8 @@ int main(int argc, char *argv[])
     a.setStyle(QStyleFactory::create("Fusion"));
 
     QCefConfig config;
+    config.setUserAgent("QCefViewApp");
+    config.setBridgeObjectName("CallBridge");
     config.setCachePath(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
 
     QCefContext cefContext(&a, argc, argv, &config);

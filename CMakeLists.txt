@@ -6,7 +6,7 @@ get_target_property(_qmake_executable Qt${QT_VERSION_MAJOR}::qmake IMPORTED_LOCA
 get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
 
 if(WIN32)
-  find_program(DEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
+    find_program(DEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
 endif()
 
 qt_standard_project_setup()
@@ -17,6 +17,7 @@ qt_add_executable(QCefViewApp
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    websrc/index.html
 )
 
 add_subdirectory(thirdparty/QCefView)
@@ -29,10 +30,24 @@ set_target_properties(QCefView PROPERTIES
 
 target_link_libraries(QCefViewApp
     PRIVATE
-        Qt::Core
-        Qt::Widgets
-        QCefView
+    Qt::Core
+    Qt::Widgets
+    QCefView
 )
+
+target_compile_definitions(QCefViewApp PRIVATE
+    $<$<CONFIG:Debug>:APP_DEV>
+)
+
+add_custom_target(CopyWebResources ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/websrc"
+    "$<TARGET_FILE_DIR:QCefViewApp>/webres"
+    COMMENT "Copying web resources..."
+    VERBATIM
+)
+
+add_dependencies(QCefViewApp CopyWebResources)
 
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME}
@@ -67,7 +82,7 @@ qt_generate_deploy_app_script(
 install(SCRIPT ${deploy_script})
 
 set_target_properties(${PROJECT_NAME}
-  PROPERTIES
+    PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/output/$<CONFIG>/bin"
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/output/$<CONFIG>/lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/output/$<CONFIG>/lib"
