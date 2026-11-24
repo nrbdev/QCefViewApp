@@ -5,7 +5,9 @@
 #include <QCefView.h>
 #include <QString>
 #include <QVariantList>
-
+#if APP_DEV
+#include <QProcess>
+#endif
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -33,5 +35,13 @@ protected slots:
 private:
     Ui::MainWindow *ui;
     QCefView* cefViewWidget = nullptr;
+
+#if APP_DEV
+    QProcess *viteProcess = nullptr;
+
+    void startVite();
+    void stopVite();
+    void waitForVite();
+#endif
 };
 #endif // MAINWINDOW_H

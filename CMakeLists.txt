@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.19)
 project(QCefViewApp LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network)
 get_target_property(_qmake_executable Qt${QT_VERSION_MAJOR}::qmake IMPORTED_LOCATION)
 get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
 
 if(WIN32)
-    find_program(DEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
+    find_program(DEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}" REQUIRED)
 endif()
+
+find_program(NPM_EXECUTABLE npm REQUIRED)
+set(VITE_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/app")
 
 qt_standard_project_setup()
 
@@ -17,10 +20,17 @@ qt_add_executable(QCefViewApp
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
-    websrc/index.html
 )
 
 add_subdirectory(thirdparty/QCefView)
+
+add_custom_target(vite_app
+    COMMAND ${NPM_EXECUTABLE} run build
+    WORKING_DIRECTORY ${VITE_APP_DIR}
+    BYPRODUCTS "${VITE_APP_DIR}/dist/index.html"
+    COMMENT "Building vite app..."
+    VERBATIM
+)
 
 set_target_properties(QCefView PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/QCefView/$<CONFIG>/bin"
@@ -32,30 +42,29 @@ target_link_libraries(QCefViewApp
     PRIVATE
     Qt::Core
     Qt::Widgets
+    Qt::Network
     QCefView
 )
 
 target_compile_definitions(QCefViewApp PRIVATE
     $<$<CONFIG:Debug>:APP_DEV>
+    VITE_APP_DIR="${VITE_APP_DIR}"
 )
 
-add_custom_target(CopyWebResources ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_CURRENT_SOURCE_DIR}/websrc"
-    "$<TARGET_FILE_DIR:QCefViewApp>/webres"
-    COMMENT "Copying web resources..."
-    VERBATIM
-)
 
-add_dependencies(QCefViewApp CopyWebResources)
+add_dependencies(QCefViewApp vite_app)
 
 if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME}
+    add_custom_command(TARGET QCefViewApp
         POST_BUILD
 
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         $<TARGET_FILE_DIR:QCefView>
         $<TARGET_FILE_DIR:${PROJECT_NAME}>
+
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${VITE_APP_DIR}/dist"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/app"
 
         COMMAND ${DEPLOYQT_EXECUTABLE}
         --no-svg
@@ -73,13 +82,10 @@ install(TARGETS QCefViewApp
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-qt_generate_deploy_app_script(
-    TARGET QCefViewApp
-    OUTPUT_SCRIPT deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
+install(
+    DIRECTORY "${VITE_APP_DIR}/dist/"
+    DESTINATION "${CMAKE_INSTALL_BINDIR}/app"
 )
-
-install(SCRIPT ${deploy_script})
 
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
