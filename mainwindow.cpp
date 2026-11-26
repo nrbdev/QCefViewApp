@@ -49,25 +49,20 @@ void MainWindow::onInvokeMethod(const QCefBrowserId &browserId,
                                 const QVariantList &arguments)
 {
     if (method == "TestMethod") {
-        QMetaObject::invokeMethod(
-            this,
-            [=]() {
-                QString title("QCef InvokeMethod Notify");
-                QString text = QString("Current Thread: QT_UI\r\n"
-                                       "Method: %1\r\n"
-                                       "Arguments:\r\n")
-                                   .arg(method);
+        QString title("QCef InvokeMethod Notify");
+        QString text = QString("Current Thread: QT_UI\r\n"
+                               "Method: %1\r\n"
+                               "Arguments:\r\n")
+                           .arg(method);
 
-                for (int i = 0; i < arguments.size(); i++) {
-                    text.append(QString("%1 Type:%2, Value:%3\r\n")
-                                    .arg(i)
-                                    .arg(arguments[i].typeName())
-                                    .arg(arguments[i].toString()));
-                }
+        for (int i = 0; i < arguments.size(); i++) {
+            text.append(QString("%1 Type:%2, Value:%3\r\n")
+                            .arg(i)
+                            .arg(arguments[i].typeName())
+                            .arg(arguments[i].toString()));
+        }
 
-                QMessageBox::information(this->window(), title, text);
-            },
-            Qt::QueuedConnection);
+        QMessageBox::information(this->window(), title, text);
     }
 }
 
