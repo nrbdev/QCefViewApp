@@ -7,6 +7,8 @@ get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
 
 if(WIN32)
     find_program(DEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}" REQUIRED)
+elseif(APPLE)
+    find_program(DEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}" REQUIRED)
 endif()
 
 find_program(NPM_EXECUTABLE npm REQUIRED)
@@ -54,17 +56,23 @@ target_compile_definitions(QCefViewApp PRIVATE
 
 add_dependencies(QCefViewApp vite_app)
 
-if(WIN32)
+add_custom_command(TARGET QCefViewApp
+    POST_BUILD
+
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    $<TARGET_FILE_DIR:QCefView>
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${VITE_APP_DIR}/dist"
+    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/app"
+
+    VERBATIM
+)
+
+if(WIN32 OR APPLE)
     add_custom_command(TARGET QCefViewApp
         POST_BUILD
-
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        $<TARGET_FILE_DIR:QCefView>
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>
-
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${VITE_APP_DIR}/dist"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/app"
 
         COMMAND ${DEPLOYQT_EXECUTABLE}
         --no-svg
