@@ -26,6 +26,21 @@ protected slots:
                         const QString& method,
                         const QVariantList& arguments);
 
+    void onLoadEnd(const int &browserId,
+                   const QString &frameId,
+                   bool isMainFrame,
+                   int httpStatusCode);
+
+    void onLoadStart(const QCefBrowserId &browserId,
+                     const QCefFrameId &frameId,
+                     bool isMainFrame,
+                     int transitionType);
+
+    void onLoadingStateChanged(const QCefBrowserId &browserId,
+                               bool isLoading,
+                               bool canGoBack,
+                               bool canGoForward);
+
     void onBtnShowDevToolsClicked();
 
 private:

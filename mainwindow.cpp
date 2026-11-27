@@ -3,6 +3,7 @@
 
 #include <QCefContext.h>
 #include <QCefSetting.h>
+#include <QDebug>
 #include <QDir>
 #include <QMessageBox>
 #include <QPushButton>
@@ -34,6 +35,9 @@ MainWindow::MainWindow(QWidget *parent)
             this,
             &MainWindow::onBtnShowDevToolsClicked);
     connect(cefViewWidget, &QCefView::invokeMethod, this, &MainWindow::onInvokeMethod);
+    connect(cefViewWidget, &QCefView::loadEnd, this, &MainWindow::onLoadEnd);
+    connect(cefViewWidget, &QCefView::loadStart, this, &MainWindow::onLoadStart);
+    connect(cefViewWidget, &QCefView::loadingStateChanged, this, &MainWindow::onLoadingStateChanged);
 }
 
 void MainWindow::onBtnShowDevToolsClicked()
@@ -41,6 +45,33 @@ void MainWindow::onBtnShowDevToolsClicked()
     if (cefViewWidget) {
         cefViewWidget->showDevTools();
     }
+}
+
+void MainWindow::onLoadStart(const QCefBrowserId &browserId,
+                             const QCefFrameId &frameId,
+                             bool isMainFrame,
+                             int transitionType)
+{
+    qDebug() << "onLoadStart, browserId:" << browserId << ", frameId:" << frameId
+             << ", isMainFrame:" << isMainFrame << ", transitionType:" << transitionType;
+}
+
+void MainWindow::onLoadEnd(const int &browserId,
+                           const QString &frameId,
+                           bool isMainFrame,
+                           int httpStatusCode)
+{
+    qDebug() << "onLoadEnd, browserId:" << browserId << ", frameId:" << frameId
+             << ", isMainFrame:" << isMainFrame << ", httpStatusCode:" << httpStatusCode;
+}
+
+void MainWindow::onLoadingStateChanged(const QCefBrowserId &browserId,
+                                       bool isLoading,
+                                       bool canGoBack,
+                                       bool canGoForward)
+{
+    qDebug() << "onLoadingStateChanged, browserId:" << browserId << ", isLoading:" << isLoading
+             << ", canGoBack:" << canGoBack << ", canGoForward:" << canGoForward;
 }
 
 void MainWindow::onInvokeMethod(const QCefBrowserId &browserId,
